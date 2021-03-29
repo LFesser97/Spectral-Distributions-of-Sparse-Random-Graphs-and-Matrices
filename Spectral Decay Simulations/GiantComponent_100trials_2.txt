@@ -1,0 +1,74 @@
+% Random graph simulation for various values of alpha - giant component size
+
+% Clear Workspace
+clear
+% Define parameters, initiate random number generator
+gSize = 1000;
+trials = 100;
+alpha = [0.1 0.2 0.3 0.5 0.7 0.8 0.9 1 1.1 1.2 1.3 1.5 2 3 5 7 10 20 50 70 100]
+rng shuffle;
+
+% Initiate matrices and tables
+A = zeros(gSize);      % initiate adjacency matrix
+gcSize = zeros(length(alpha), trials);     % inititate giant component matrix
+subgNumber = zeros(length(alpha), trials);   
+gAlpha = zeros(length(alpha),1);
+gcAvgSize = zeros(length(alpha),1);
+gcMaxSize = zeros(length(alpha),1);
+gcMinSize = zeros(length(alpha),1);
+subgAvgNumber = zeros(length(alpha),1);
+subgMaxNumber = zeros(length(alpha),1);
+subgMinNumber = zeros(length(alpha),1);
+gcSizeStats = table(gAlpha, gcAvgSize, gcMaxSize, gcMinSize, subgAvgNumber, subgMaxNumber, subgMinNumber);
+gcSizeStats.gAlpha = (alpha)';
+
+% For all values of alpha 
+for k = 1:length(alpha)
+    fprintf("alpha = %d\n",alpha(k))
+    for i = 1:trials
+        % Create adjacency matrix
+        r = rand(gSize) < alpha(k)/gSize;
+        A = triu(r,1);
+        A = A + A';
+        % Calculate  graph and giant component
+        names = string(1:gSize);
+        G = graph(A,names,"omitselfloops","upper");
+        [bin,binsize] = conncomp(G);
+        % binsize
+        gcSize(k,i) = max(binsize);
+        subgNumber(k,i) = length(binsize);
+        fprintf('%d',mod(i,10))
+    end         
+    gcSizeStats.gcAvgSize(k) = mean(gcSize(k,:));
+    gcSizeStats.gcMaxSize(k) = max(gcSize(k,:));
+    gcSizeStats.gcMinSize(k) = min(gcSize(k,:));
+    gcSizeStats.subgAvgNumber(k) = mean(subgNumber(k,:));
+    gcSizeStats.subgMaxNumber(k) = max(subgNumber(k,:));
+    gcSizeStats.subgMinNumber(k) = min(subgNumber(k,:));
+end
+
+% Plot statistics and errorbar diagram of giant component size
+gcSizeStats
+errorbar(gcSizeStats.gAlpha, ...
+    gcSizeStats.gcAvgSize, ...
+    gcSizeStats.gcAvgSize - gcSizeStats.gcMinSize, ...
+    gcSizeStats.gcMaxSize - gcSizeStats.gcAvgSize, "-ro")
+hold on;
+errorbar(gcSizeStats.gAlpha, ...
+    gcSizeStats.subgAvgNumber, ...
+    gcSizeStats.subgAvgNumber - gcSizeStats.subgMinNumber, ...
+    gcSizeStats.subgMaxNumber - gcSizeStats.subgAvgNumber, "-bo")
+title("Giant component size and number of subgraphs","n=1000 / 100 trials")
+legend("Size of giant component","Number of subgraphs")
+xlabel("Alpha")
+ylabel("Count")
+hold off;
+set(gca,'XScale','log');
+
+% save plot and data
+writetable(gcSizeStats,'giant_component_Stats.xlsx');  
+print("giant_component.png",'-dpng');
+
+
+
+

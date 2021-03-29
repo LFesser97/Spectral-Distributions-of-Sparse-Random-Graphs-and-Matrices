@@ -1,0 +1,32 @@
+% Random graph simulation for various values of alpha
+
+% Clear Workspace
+clear
+% Define parameters, initiate random number generator
+gSize = 100;
+trials = 100;
+alpha = [0.2 0.3 0.5 0.7 1 1.2 1.5 2 3 5 7 10 20 50 70 100]
+rng shuffle;
+
+% Initiate matrices
+A = zeros(gSize);      % initiate adjacency matrix
+e_norm = zeros(gSize, trials);     % inititate eigenvalue matrix
+
+% For all values of alpha 
+for k = 1:length(alpha)
+    fprintf("alpha = %d\n",alpha(k))
+    for i = 1:trials
+        % Create adjacency matrix
+        r = rand(gSize) < alpha(k)/gSize;
+        A = triu(r,1);
+        A = A + A';
+        % Calculate  eigenvalues
+        e_norm(:,i) = eig(A)/sqrt(alpha(k));
+        fprintf('%d',mod(i,10))
+    end         
+    e_norm;
+    % Plot and save eigenvalue histograms
+    histogram(e_norm(1:gSize-1,:),gSize,'Normalization',"probability");
+    title(sprintf("alpha = %d\n",alpha(k)));
+    print(strcat(strrep(string(alpha(k)),".","_"),".png"),'-dpng');
+end
